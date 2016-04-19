@@ -1,11 +1,10 @@
 package bot
 
 import bot.Dir.Dir
-import bot.Tile.{ Air, Mine, Wall }
-
+import bot.Tile._
 import scala.annotation.tailrec
 import scala.util.Random
-import bot.Tile.Tavern
+import bot.Tile.{ Hero => HeroTile }
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,7 +17,7 @@ class DaronaBot extends Bot {
     val myPos = input.hero.pos
     val board = input.game.board
     val life = input.hero.life
-    println(s"life : $life")
+    println(s"life : $life, my pos : $myPos")
 
     def dirFallBack = Random.shuffle(Dir.allMoves) find { dir ⇒
       !(board at myPos.to(dir) contains Wall)
@@ -34,18 +33,18 @@ class DaronaBot extends Bot {
     dirToNearest(input, myPos)(target) getOrElse dirFallBack
   }
 
-  def dirToNearest(input: Input, from: Pos)(cond: (Pos ⇒ Boolean)) = {
+  def dirToNearest(input: Input, from: Pos)(cond: (Pos ⇒ Boolean)): Option[Dir] = {
     val board = input.game.board
     val allowedArea: PartialFunction[Tile, Boolean] = {
       case Air ⇒ true
-      case h: Tile.Hero if input.isOpponent(h.id) || h.id == input.hero.id ⇒ true
+      case HeroTile(id) if input.isOpponent(id) || id == input.hero.id ⇒ true
       case _ ⇒ false
     }
 
     @tailrec
     def bfs(toVisit: Seq[(Pos, Dir)], visited: IndexedSeq[Boolean]): Option[Dir] =
       if (toVisit.isEmpty) {
-        println("Not found")
+        println("No target found")
         None
       } else if (cond(toVisit.head._1)) {
         println(s"found: ${toVisit.head._1}, return ${toVisit.head._2}")
@@ -56,17 +55,12 @@ class DaronaBot extends Bot {
         val moves = if (board at pos exists allowedArea) Dir.allMoves else Seq.empty
         val neighbors = moves map { d ⇒ (pos.to(d), if (dir == Dir.Stay) d else dir) }
         val newVisit = neighbors filter {
-          case (p, _) ⇒
-            (p isIn board.size) && !visited(board.toIndex(p))
+          case (p, _) ⇒ (p isIn board.size) && !visited(board.toIndex(p))
         }
         bfs(toVisit.tail ++ newVisit, visited.updated(board.toIndex(pos), true))
       }
 
     bfs(Vector((from, Dir.Stay)), Vector.fill(board.size * board.size)(false))
-  }
-
-  def mines(board: Board) = board.tiles.zipWithIndex collect {
-    case (m: Mine, i) ⇒ (m, board.fromIndex(i))
   }
 
 }

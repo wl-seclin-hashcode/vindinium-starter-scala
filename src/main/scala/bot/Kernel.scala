@@ -1,6 +1,5 @@
 package bot
 
-
 object Main extends App {
 
   val bot: Bot = new DaronaBot
@@ -40,6 +39,7 @@ object Main extends App {
   def training(server: Server, boot: Server ⇒ Input) {
     failsafe {
       val input = boot(server)
+      println(input)
       println("Training game " + input.viewUrl)
       steps(server, input)
       println(s"\nFinished training game ${input.viewUrl}")
