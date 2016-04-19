@@ -7,6 +7,7 @@ object Dir extends Enumeration {
 }
 
 import Dir._
+import bot.Tile.Mine
 
 case class Pos(x: Int, y: Int) {
 
@@ -61,16 +62,26 @@ case class Hero(
 }
 
 case class Game(
-  id: String,
-  turn: Int,
-  maxTurns: Int,
-  heroes: List[Hero],
-  board: Board,
-  finished: Boolean)
+    id: String,
+    turn: Int,
+    maxTurns: Int,
+    heroes: List[Hero],
+    board: Board,
+    finished: Boolean) {
+
+  def hero(id: Int) = heroes.filter(_.id == id).head
+
+}
 
 case class Input(
-  game: Game,
-  hero: Hero,
-  token: String,
-  viewUrl: String,
-  playUrl: String)
+    game: Game,
+    hero: Hero,
+    token: String,
+    viewUrl: String,
+    playUrl: String) {
+
+  def isOpponent(id: Int) = game.hero(id).name != hero.name
+
+  def belongsToFriend(mine: Mine) = mine.heroId.exists(i => !isOpponent(i))
+
+}

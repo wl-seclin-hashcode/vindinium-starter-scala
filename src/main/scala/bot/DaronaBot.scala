@@ -26,24 +26,26 @@ class DaronaBot extends Bot {
 
     def target(pos: Pos) = board at pos exists {
       case Tavern if life <= 60 ⇒ true
-      case m: Mine if m.heroId != Some(input.hero.id) && life > 30 ⇒ true
+      case m: Mine if life > 30 &&
+        !input.belongsToFriend(m) ⇒ true
       case _ ⇒ false
     }
 
-    dirToNearest(board, myPos)(target) getOrElse dirFallBack
+    dirToNearest(input, myPos)(target) getOrElse dirFallBack
   }
 
-  def dirToNearest(board: Board, from: Pos)(cond: (Pos ⇒ Boolean)) = {
+  def dirToNearest(input: Input, from: Pos)(cond: (Pos ⇒ Boolean)) = {
+    val board = input.game.board
     val allowedArea: PartialFunction[Tile, Boolean] = {
-      case Air          ⇒ true
-      case _: Tile.Hero ⇒ true
-      case _            ⇒ false
+      case Air ⇒ true
+      case h: Tile.Hero if input.isOpponent(h.id) || h.id == input.hero.id ⇒ true
+      case _ ⇒ false
     }
 
     @tailrec
     def bfs(toVisit: Seq[(Pos, Dir)], visited: IndexedSeq[Boolean]): Option[Dir] =
       if (toVisit.isEmpty) {
-        //        println("Not found")
+        println("Not found")
         None
       } else if (cond(toVisit.head._1)) {
         println(s"found: ${toVisit.head._1}, return ${toVisit.head._2}")
