@@ -1,26 +1,21 @@
 package bot
-import bot.Tile.{Air, Mine, Wall}
 
 import scala.util.Random
 
-/**
-  * Created with IntelliJ IDEA.
-  * User: a203673
-  * Date: 19/04/16
-  * Time: 12:49
-  */
+import bot.Tile._
+
 class DaronaBot extends Bot {
   def move(input: Input) = {
+    val me = input.hero.id
     val (myPos: Pos, pos: Pos) = nearestMine(input)
-
 
     println(s"mine la plus proche: $pos")
     println(s"mes coords: $myPos")
 
-    val dir = ((pos.col - myPos.col).signum, (pos.line - myPos.line).signum) match {
+    val dir = ((pos.y - myPos.y).signum, (pos.x - myPos.x).signum) match {
       case (-1, _) ⇒ Dir.West
-      case (1, _) ⇒ Dir.East
-      case (0, 1) ⇒ Dir.South
+      case (1, _)  ⇒ Dir.East
+      case (0, 1)  ⇒ Dir.South
       case (0, -1) ⇒ Dir.North
     }
 
@@ -30,24 +25,33 @@ class DaronaBot extends Bot {
       }
     } getOrElse Dir.Stay
 
-    if (input.game.board at myPos.to(dir) exists(Air ==) ) dir else dirFallBack
+    def isPath(t: Tile) = t match {
+      case Wall             => false
+      case Tavern           => false
+      case Mine(Some(`me`)) => false
+      case _                => true
+    }
+    val move = if (input.game.board at myPos.to(dir) exists (isPath)) dir else dirFallBack
+    println(move)
+    move
   }
 
   def nearestMine(input: Input): (Pos, Pos) = {
-    val notMyMines = mines(input.game.board) filter { case (m, p) ⇒
-      m.heroId != Some(input.hero.id)
+    val notMyMines = mines(input.game.board) filter {
+      case (m, p) ⇒
+        m.heroId != Some(input.hero.id)
     }
 
     val myPos = input.hero.pos
     val (mine, pos) = notMyMines minBy { case (m, p) ⇒ p.dist2(myPos) }
 
-    assert( (input.game.board at pos).get.isInstanceOf[Mine])
+    assert((input.game.board at pos).get.isInstanceOf[Mine])
 
     (myPos, pos)
   }
 
   def mines(board: Board) = board.tiles.zipWithIndex collect {
-    case (m:Mine, i) ⇒ (m, Pos(i/board.size, i % board.size))
+    case (m: Mine, i) ⇒ (m, Pos(i / board.size, i % board.size))
   }
 
 }

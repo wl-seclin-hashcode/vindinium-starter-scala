@@ -1,7 +1,5 @@
 package bot
 
-import scala.Left
-import scala.Right
 
 object Main extends App {
 

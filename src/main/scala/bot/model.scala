@@ -7,21 +7,24 @@ object Dir extends Enumeration {
 
 import Dir._
 
-case class Pos(line: Int, col: Int) {
+case class Pos(x: Int, y: Int) {
+
+  def col = x
+  def line = y
 
   def neighbors = Set(North, South, West, East) map to
 
   def to(dir: Dir) = dir match {
     case Stay  ⇒ this
-    case North ⇒ copy(line = line - 1)
-    case South ⇒ copy(line = line + 1)
-    case East  ⇒ copy(col = col + 1)
-    case West  ⇒ copy(col = col - 1)
+    case North ⇒ copy(x = x - 1)
+    case South ⇒ copy(x = x + 1)
+    case East  ⇒ copy(y = y + 1)
+    case West  ⇒ copy(y = y - 1)
   }
 
-  def isIn(size: Int) = line >= 0 && line < size && col >= 0 && col < size
+  def isIn(size: Int) = x >= 0 && x < size && y >= 0 && y < size
 
-  def dist2(to: Pos) = (line - to.line)*(line - to.line) + (col - to.col)*(col - to.col)
+  def dist2(to: Pos) = (x - to.x) * (x - to.x) + (y - to.y) * (y - to.y)
 }
 
 sealed trait Tile
@@ -36,22 +39,22 @@ object Tile {
 case class Board(size: Int, tiles: Vector[Tile]) {
 
   def at(pos: Pos): Option[Tile] =
-    if (pos isIn size) tiles lift (pos.line * size + pos.col) else None
+    if (pos isIn size) tiles lift (pos.x * size + pos.y) else None
 }
 
 case class Hero(
-  id: Int,
-  name: String,
-  pos: Pos,
-  life: Int,
-  gold: Int,
-  mineCount: Int,
-  spawnPos: Pos,
-  crashed: Boolean,
-  elo: Option[Int]) {
+    id: Int,
+    name: String,
+    pos: Pos,
+    life: Int,
+    gold: Int,
+    mineCount: Int,
+    spawnPos: Pos,
+    crashed: Boolean,
+    elo: Option[Int]) {
 
   override def toString = s"Hero $id $pos life:$life mine:$mineCount gold:$gold"
-  }
+}
 
 case class Game(
   id: String,
