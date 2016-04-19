@@ -7,19 +7,21 @@ object Dir extends Enumeration {
 
 import Dir._
 
-case class Pos(x: Int, y: Int) {
+case class Pos(line: Int, col: Int) {
 
   def neighbors = Set(North, South, West, East) map to
 
   def to(dir: Dir) = dir match {
     case Stay  ⇒ this
-    case North ⇒ copy(x = x - 1)
-    case South ⇒ copy(x = x + 1)
-    case East  ⇒ copy(y = y + 1)
-    case West  ⇒ copy(y = y - 1)
+    case North ⇒ copy(line = line - 1)
+    case South ⇒ copy(line = line + 1)
+    case East  ⇒ copy(col = col + 1)
+    case West  ⇒ copy(col = col - 1)
   }
 
-  def isIn(size: Int) = (x >= 0 && x < size && y >= 0 && y < size)
+  def isIn(size: Int) = line >= 0 && line < size && col >= 0 && col < size
+
+  def dist2(to: Pos) = (line - to.line)*(line - to.line) + (col - to.col)*(col - to.col)
 }
 
 sealed trait Tile
@@ -34,7 +36,7 @@ object Tile {
 case class Board(size: Int, tiles: Vector[Tile]) {
 
   def at(pos: Pos): Option[Tile] =
-    if (pos isIn size) tiles lift (pos.x * size + pos.y) else None
+    if (pos isIn size) tiles lift (pos.line * size + pos.col) else None
 }
 
 case class Hero(
