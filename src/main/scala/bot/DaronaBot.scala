@@ -30,6 +30,12 @@ class DaronaBot extends Bot {
   }
 
   def dirToNearest(board: Board, from:Pos)(cond: (Pos ⇒ Boolean)) = {
+    val allowedArea: PartialFunction[Tile, Boolean] = {
+      case Air ⇒ true
+      case _: Tile.Hero ⇒ true
+      case _ ⇒ false
+    }
+
     @tailrec
     def bfs(toVisit: Seq[(Pos, Dir)], visited: IndexedSeq[Boolean]): Option[Dir] =
       if (toVisit.isEmpty) {
@@ -43,7 +49,7 @@ class DaronaBot extends Bot {
       else {
         val (pos, dir) = toVisit.head
         println(s"Visiting $pos")
-        val moves = if (board at pos contains Air) Dir.allMoves else Seq.empty
+        val moves = if (board at pos exists allowedArea) Dir.allMoves else Seq.empty
         val neighbors = moves map { d ⇒ (pos.to(d), if (dir == Dir.Stay) d else dir) }
         val newVisit = neighbors filter { case (p, _) ⇒
           (p isIn board.size) && !visited(board.toIndex(p))

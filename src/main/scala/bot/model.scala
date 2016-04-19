@@ -10,8 +10,8 @@ import Dir._
 
 case class Pos(x: Int, y: Int) {
 
-  def col = x
-  def line = y
+  def line = x
+  def col = y
 
   def neighbors = Set(North, South, West, East) map to
 
@@ -42,7 +42,7 @@ case class Board(size: Int, tiles: Vector[Tile]) {
   def at(pos: Pos): Option[Tile] =
     if (pos isIn size) tiles lift toIndex(pos) else None
 
-  def toIndex(pos: Pos): Int = pos.line * size + pos.col
+  def toIndex(pos: Pos): Int = pos.x * size + pos.y
   def fromIndex(i: Int) = Pos(i / size, i % size)
 }
 
