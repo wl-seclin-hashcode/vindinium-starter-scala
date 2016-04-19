@@ -2,9 +2,6 @@ package bot
 
 import play.api.libs.json._
 import scalaj.http.{ Http, HttpOptions }
-import play.api.libs.functional.syntax.functionalCanBuildApplicative
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import scala.util.Try
 import scalaj.http.Http.Request
 
 final class Server(

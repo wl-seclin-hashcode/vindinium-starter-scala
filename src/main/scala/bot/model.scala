@@ -3,6 +3,7 @@ package bot
 object Dir extends Enumeration {
   type Dir = Value
   val Stay, North, South, East, West = Value
+  val allMoves = Seq(North, South, West, East)
 }
 
 import Dir._
@@ -39,7 +40,10 @@ object Tile {
 case class Board(size: Int, tiles: Vector[Tile]) {
 
   def at(pos: Pos): Option[Tile] =
-    if (pos isIn size) tiles lift (pos.x * size + pos.y) else None
+    if (pos isIn size) tiles lift toIndex(pos) else None
+
+  def toIndex(pos: Pos): Int = pos.line * size + pos.col
+  def fromIndex(i: Int) = Pos(i / size, i % size)
 }
 
 case class Hero(

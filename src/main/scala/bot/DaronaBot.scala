@@ -1,57 +1,61 @@
 package bot
 
+import bot.Dir.Dir
+import bot.Tile.{Air, Mine, Wall}
+
+import scala.annotation.tailrec
 import scala.util.Random
 
-import bot.Tile._
-
+/**
+  * Created with IntelliJ IDEA.
+  * User: a203673
+  * Date: 19/04/16
+  * Time: 12:49
+  */
 class DaronaBot extends Bot {
   def move(input: Input) = {
-    val me = input.hero.id
-    val (myPos: Pos, pos: Pos) = nearestMine(input)
+    val myPos = input.hero.pos
+    val board = input.game.board
 
-    println(s"mine la plus proche: $pos")
-    println(s"mes coords: $myPos")
-
-    val dir = ((pos.y - myPos.y).signum, (pos.x - myPos.x).signum) match {
-      case (-1, _) ⇒ Dir.West
-      case (1, _)  ⇒ Dir.East
-      case (0, 1)  ⇒ Dir.South
-      case (0, -1) ⇒ Dir.North
-    }
-
-    val dirFallBack = {
-      Random.shuffle(List(Dir.North, Dir.South, Dir.East, Dir.West)) find { dir ⇒
-        input.game.board at myPos.to(dir) exists (Wall !=)
-      }
+    def dirFallBack = Random.shuffle(Dir.allMoves) find { dir ⇒
+      !(board at myPos.to(dir) contains Wall)
     } getOrElse Dir.Stay
 
-    def isPath(t: Tile) = t match {
-      case Wall             => false
-      case Tavern           => false
-      case Mine(Some(`me`)) => false
-      case _                => true
+    def isAvaibleMine(pos: Pos) = board at pos exists {
+      case m: Mine ⇒ !m.heroId.contains(input.hero.id)
+      case _ ⇒ false
     }
-    val move = if (input.game.board at myPos.to(dir) exists (isPath)) dir else dirFallBack
-    println(move)
-    move
+
+    dirToNearest(board, myPos)(isAvaibleMine) getOrElse dirFallBack
   }
 
-  def nearestMine(input: Input): (Pos, Pos) = {
-    val notMyMines = mines(input.game.board) filter {
-      case (m, p) ⇒
-        m.heroId != Some(input.hero.id)
-    }
+  def dirToNearest(board: Board, from:Pos)(cond: (Pos ⇒ Boolean)) = {
+    @tailrec
+    def bfs(toVisit: Seq[(Pos, Dir)], visited: IndexedSeq[Boolean]): Option[Dir] =
+      if (toVisit.isEmpty) {
+        println("Not found")
+        None
+      }
+      else if (cond(toVisit.head._1)) {
+        println(s"found: ${toVisit.head._1}, return ${toVisit.head._2}")
+        Some(toVisit.head._2)
+      }
+      else {
+        val (pos, dir) = toVisit.head
+        println(s"Visiting $pos")
+        val moves = if (board at pos contains Air) Dir.allMoves else Seq.empty
+        val neighbors = moves map { d ⇒ (pos.to(d), if (dir == Dir.Stay) d else dir) }
+        val newVisit = neighbors filter { case (p, _) ⇒
+          (p isIn board.size) && !visited(board.toIndex(p))
+        }
+        bfs(toVisit.tail ++ newVisit, visited.updated(board.toIndex(pos), true))
+      }
 
-    val myPos = input.hero.pos
-    val (mine, pos) = notMyMines minBy { case (m, p) ⇒ p.dist2(myPos) }
-
-    assert((input.game.board at pos).get.isInstanceOf[Mine])
-
-    (myPos, pos)
+    bfs(Vector((from, Dir.Stay)), Vector.fill(board.size * board.size)(false))
   }
 
   def mines(board: Board) = board.tiles.zipWithIndex collect {
-    case (m: Mine, i) ⇒ (m, Pos(i / board.size, i % board.size))
+    case (m:Mine, i) ⇒ (m, board.fromIndex(i))
   }
 
 }
